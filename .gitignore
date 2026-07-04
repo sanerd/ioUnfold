@@ -1,0 +1,19 @@
+# Node.js
+node_modules/
+.pnpm-store/
+
+# Build- und Verteilungsordner
+dist/
+build/
+.next/
+out/
+.turbo/
+
+# Umgebungsvariablen & Geheimnisse
+.env
+.env.local
+.env.*.local
+
+# Betriebssystem-Dateien
+.DS_Store
+Thumbs.db
