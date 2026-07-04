@@ -15,6 +15,7 @@ Dieses Repository verwaltet das gesamte Software-Ökosystem von **ioUnfold** als
 
 - `apps/` — Deploybare Client-Anwendungen (Web-Frontends, Mobile Apps, Auth-Services).
 - `mcp-servers/` — KI-native Backends, die über das Model Context Protocol kommunizieren.
+  ├── mcp-floorball/ # NEU: MCP-Server für den Import der Swiss Unihockey API v2 in Neo4j
 - `packages/` — Interne, wiederverwendbare npm-Module (Validierungs-Schemas, UI-Themes, Configs).
 
 ---
@@ -42,3 +43,7 @@ Führe diese Befehle immer im **Wurzelverzeichnis (Root)** des Repositories aus:
 - `pnpm install` — Installiert alle Abhängigkeiten über alle Workspaces hinweg.
 - `pnpm dev` — Startet alle Apps und MCP-Server parallel im Entwicklungsmodus.
 - `pnpm build` — Baut alle Anwendungen produktionsreif (inkl. Cache-Optimierung).
+
+### Schritt 5: Swiss Unihockey & Neo4j MCP-Server (@iounfold/mcp-floorball)
+
+Ein dedizierter MCP-Server wurde aufgesetzt, um Daten der offiziellen Swiss Unihockey API v2 zu konsumieren und in eine lokale Neo4j-Graphdatenbank zu transformieren. Der Server exponiert Tools wie `sync_swiss_unihockey_club`, die direkt von LLMs (z.B. in Cursor/Windsurf) oder dem Admin-Dashboard getriggert werden können.
