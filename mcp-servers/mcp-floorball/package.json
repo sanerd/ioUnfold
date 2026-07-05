@@ -10,6 +10,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@iounfold/database-schemas": "workspace:*",
     "@modelcontextprotocol/sdk": "^0.6.0",
     "axios": "^1.7.0",
     "neo4j-driver": "^5.20.0",

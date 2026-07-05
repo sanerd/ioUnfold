@@ -1,73 +1,81 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema
-} from '@modelcontextprotocol/sdk/types.js';
-import { initNeo4j, closeNeo4j } from './services/neo4j';
-import { syncClubData } from './tools/syncSwissUnihockey';
-import * as dotenv from 'dotenv';
+import { UnihockeyApiService } from './services/floorball';
+import { GameRepository } from './repositories/game.repository';
+import { CompetitionRepository } from './repositories/competition.repository';
+import { driver } from './config/neo4j';
 
-dotenv.config();
+const apiService = new UnihockeyApiService();
+const gameRepository = new GameRepository();
+const compRepository = new CompetitionRepository();
 
-// 1. MCP Server initialisieren
-const server = new Server(
-  { name: 'mcp-totalfloorball', version: '1.0.0' },
-  { capabilities: { tools: {} } }
-);
+let schedulerTimeout: NodeJS.Timeout | null = null;
 
-// 2. Verfügbare Tools auflisten (für das LLM sichtbar)
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: 'sync_swiss_unihockey_club',
-        description:
-          'Lädt Vereins- und Teamdaten aus der Swiss Unihockey API v2 und überführt sie in die Neo4j Graphdatenbank.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            clubId: {
-              type: 'string',
-              description:
-                'Die offizielle ID des Vereins bei Swiss Unihockey (z.B. 431137 für SV Wiler-Ersigen).'
-            }
-          },
-          required: ['clubId']
-        }
-      }
-    ]
-  };
-});
-
-// 3. Tool-Ausführung handhaben
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-
-  if (name === 'sync_swiss_unihockey_club') {
-    const clubId = args?.clubId as string;
-    const result = await syncClubData(clubId);
-    return { content: [{ type: 'text', text: result }] };
+function getDynamicIntervalInMs(): number {
+  const now = new Date();
+  const day = now.getDay(); // 0=So, 6=Sa, 1-5=Mo-Fr
+  const hour = now.getHours();
+  const MINUTE = 60 * 1000;
+  // Primetime Wochenende (Sa/So von 10:00 bis 22:59) -> High Frequency Polling
+  if ((day === 0 || day === 6) && hour >= 10 && hour <= 22) {
+    console.log(' [Modus] Wochenende-Live-Betrieb (1 Minute Intervall active)');
+    return 1 * MINUTE;
   }
-
-  throw new Error(`Tool ${name} nicht gefunden.`);
-});
-
-// 4. Server starten
-const main = async () => {
-  initNeo4j();
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error('TotalFloorball MCP Server läuft auf Stdio');
-};
-
-main().catch((err) => {
-  console.error('Server-Fehler:', err);
-  process.exit(1);
-});
-
-// Clean-up bei Beendigung
-process.on('SIGINT', async () => {
-  await closeNeo4j();
-  process.exit(0);
+  // Abendspiele unter der Woche (Mo-Fr von 18:00 bis 22:59)
+  if (day >= 1 && day <= 5 && hour >= 18 && hour <= 22) {
+    console.log(' [Modus] Werktag-Abendspiele (5 Minuten Intervall active)');
+    return 5 * MINUTE;
+  }
+  // Standard-Standby / Schonender Nachtbetrieb
+  console.log(' [Modus] Standby-Betrieb (60 Minuten Intervall active)');
+  return 60 * MINUTE;
+}
+async function runIngestionPipeline() {
+  const timestamp = new Date().toLocaleTimeString();
+  console.log(`
+[${timestamp}] Ingestion-Pipeline gestartet...`);
+  try {
+    const activeGames = await apiService.getLiveGames();
+    for (const game of activeGames) {
+      await gameRepository.saveLiveGame(game);
+    }
+    console.log(` [${timestamp}] Pipeline-Durchlauf erfolgreich.`);
+  } catch (error) {
+    console.error(` [${timestamp}] Kritischer Fehler in Pipeline:`, error);
+  } finally {
+    const nextInterval = getDynamicIntervalInMs();
+    console.log(
+      ` Nächster Durchlauf geplant in: ${nextInterval / 1000 / 60} Minuten.`
+    );
+    schedulerTimeout = setTimeout(runIngestionPipeline, nextInterval);
+  }
+}
+async function initialSync() {
+  console.log('[Startup] Führe Initial-Sync der Strukturdaten aus...');
+  const seasons = await apiService.getSeasons();
+  for (const season of seasons) {
+    await compRepository.saveSeason(season);
+    const leagues = await apiService.getLeagues(season.id);
+    for (const league of leagues) {
+      await compRepository.saveLeague(league);
+    }
+  }
+  console.log(' [Startup] Strukturdaten erfolgreich geladen.');
+}
+// Graceful Shutdown
+async function gracefulShutdown(signal: string) {
+  console.log(`
+${signal} empfangen. Schließe Treiber...`);
+  if (schedulerTimeout) clearTimeout(schedulerTimeout);
+  try {
+    await driver.close();
+    console.log(' Neo4j-Treiber erfolgreich getrennt.');
+    process.exit(0);
+  } catch (error) {
+    process.exit(1);
+  }
+}
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+console.log(' ioUnfold Floorball Series - MCP Server Initialisierung.');
+initialSync().then(() => {
+  runIngestionPipeline();
 });

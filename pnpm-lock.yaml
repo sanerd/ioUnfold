@@ -20,6 +20,9 @@ importers:
 
   mcp-servers/mcp-floorball:
     dependencies:
+      '@iounfold/database-schemas':
+        specifier: workspace:*
+        version: link:../../packages/database-schemas
       '@modelcontextprotocol/sdk':
         specifier: ^0.6.0
         version: 0.6.1
