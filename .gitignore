@@ -17,3 +17,6 @@ out/
 # Betriebssystem-Dateien
 .DS_Store
 Thumbs.db
+
+# Docker local data (falls du Pfade statt Named Volumes nutzt)
+.neo4j/

@@ -1,0 +1,45 @@
+services:
+  # Instanz 1: TotalFloorball (Sport Analytics Engine)
+  neo4j-floorball:
+    image: neo4j:5.20
+    container_name: iounfold-neo4j-floorball
+    ports:
+      - '7476:7474' # Web-Interface auf Port 7476 verschoben
+      - '7689:7687' # Bolt-Protokoll auf Port 7689 verschoben
+    volumes:
+      - neo4j_floorball_data:/data
+      - neo4j_floorball_logs:/logs
+      - neo4j_floorball_import:/var/lib/neo4j/import
+      - neo4j_floorball_plugins:/plugins
+    environment:
+      - NEO4J_AUTH=neo4j/totalfloorball2026
+      - NEO4J_PLUGINS=["apoc"]
+    restart: unless-stopped
+
+  # Instanz 2: Recipe Intelligence (Visual Recipe Analytics)
+  neo4j-recipes:
+    image: neo4j:5.20
+    container_name: iounfold-neo4j-recipes
+    ports:
+      - '7477:7474' # Web-Interface auf Port 7477 verschoben
+      - '7690:7687' # Bolt-Protokoll auf Port 7690 verschoben
+    volumes:
+      - neo4j_recipes_data:/data
+      - neo4j_recipes_logs:/logs
+      - neo4j_recipes_import:/var/lib/neo4j/import
+      - neo4j_recipes_plugins:/plugins
+    environment:
+      - NEO4J_AUTH=neo4j/recipeintelligence2026
+      - NEO4J_PLUGINS=["apoc"]
+    restart: unless-stopped
+
+volumes:
+  neo4j_floorball_data:
+  neo4j_floorball_logs:
+  neo4j_floorball_import:
+  neo4j_floorball_plugins:
+
+  neo4j_recipes_data:
+  neo4j_recipes_logs:
+  neo4j_recipes_import:
+  neo4j_recipes_plugins:
