@@ -48,18 +48,64 @@ async function runIngestionPipeline() {
     schedulerTimeout = setTimeout(runIngestionPipeline, nextInterval);
   }
 }
+
 async function initialSync() {
-  console.log('[Startup] Führe Initial-Sync der Strukturdaten aus...');
-  const seasons = await apiService.getSeasons();
-  for (const season of seasons) {
-    await compRepository.saveSeason(season);
-    const leagues = await apiService.getLeagues(season.id);
+  console.log(
+    '\n🏗️ [Startup] Starte historischen Deep-Import für Saison 2025/2026...'
+  );
+
+  const targetSeasonId = '2025'; // Entspricht Saison 2025/26 bei Swiss Unihockey
+
+  try {
+    // 1. Saisons synchronisieren
+    const seasons = await apiService.getSeasons();
+    const currentSeason = seasons.find((s) => s.id === targetSeasonId);
+
+    if (!currentSeason) {
+      console.error(
+        `❌ Saison ${targetSeasonId} wurde auf der API nicht gefunden.`
+      );
+      return;
+    }
+
+    await compRepository.saveSeason(currentSeason);
+
+    // 2. Alle Ligen dieser Saison holen und anlegen
+    const leagues = await apiService.getLeagues(targetSeasonId);
+    console.log(`✅ ${leagues.length} Ligen für die Saison gefunden.`);
+
     for (const league of leagues) {
       await compRepository.saveLeague(league);
+
+      // 3. JEDES Spiel dieser Liga aus der Saison 2025/26 in den Graphen importieren
+      try {
+        const games = await apiService.getGamesByLeague(
+          targetSeasonId,
+          league.leagueId
+        );
+        console.log(
+          `📡 [API-Service] Rufe ${games.length} Spiele ab für ${league.name}...`
+        );
+
+        for (const game of games) {
+          await gameRepository.saveLiveGame(game);
+        }
+      } catch (gamesError) {
+        // Wenn die Games-API zickt, loggen wir es, brechen aber die Ligen-Schleife NICHT ab
+        console.error(
+          `   └─ ❌ Fehler beim Spiele-Import für Liga ${league.name}:`
+        );
+      }
     }
+
+    console.log(
+      '\n🎯 [Startup] Historischer Daten-Import für 2025/26 erfolgreich abgeschlossen!'
+    );
+  } catch (error) {
+    console.error('❌ Kritischer Fehler beim historischen Import:', error);
   }
-  console.log(' [Startup] Strukturdaten erfolgreich geladen.');
 }
+
 // Graceful Shutdown
 async function gracefulShutdown(signal: string) {
   console.log(`
