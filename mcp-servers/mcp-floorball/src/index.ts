@@ -75,6 +75,24 @@ async function initialSync() {
 
     for (const club of clubs) {
       await compRepository.saveClub(club);
+
+      // 3. Alle Teams dieses Clubs in dieser Saison holen und anlegen
+      try {
+        const teams = await apiService.getTeams(targetSeasonId, club.id);
+        console.log(
+          `📡 [API-Service] Rufe ${teams.length} Teams ab für Club ${club.name}...`
+        );
+
+        for (const team of teams) {
+          await compRepository.saveTeam(team);
+        }
+      } catch (teamsError) {
+        // Wenn die Teams-API zickt, loggen wir es, brechen aber die Clubs-Schleife NICHT ab
+        console.error(
+          `   └─ ❌ Fehler beim Team-Import für Club ${club.name}:`,
+          teamsError
+        );
+      }
     }
 
     // 4. Alle Ligen dieser Saison holen und anlegen
@@ -83,6 +101,28 @@ async function initialSync() {
 
     for (const league of leagues) {
       await compRepository.saveLeague(league);
+
+      // 5. Alle Gruppen dieser Liga in dieser Saison holen und anlegen
+      try {
+        const groups = await apiService.getGroups(
+          targetSeasonId,
+          league.leagueId,
+          league.gameClassId
+        );
+        console.log(
+          `📡 [API-Service] Rufe ${groups.length} Gruppen ab für Liga ${league.name}...`
+        );
+
+        for (const group of groups) {
+          await compRepository.saveGroup(group);
+        }
+      } catch (groupsError) {
+        // Wenn die Groups-API zickt, loggen wir es, brechen aber die Ligen-Schleife NICHT ab
+        console.error(
+          `   └─ ❌ Fehler beim Gruppen-Import für Liga ${league.name}:`,
+          groupsError
+        );
+      }
 
       // 3. JEDES Spiel dieser Liga aus der Saison 2025/26 in den Graphen importieren
       /*try {

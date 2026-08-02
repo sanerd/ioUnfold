@@ -1,8 +1,8 @@
 import { getNeo4jSession } from '../config/neo4j';
-import { ApiGameSummary } from '@iounfold/database-schemas';
+import { ApiGame } from '@iounfold/database-schemas';
 
 export class GameRepository {
-  async saveLiveGame(game: ApiGameSummary): Promise<void> {
+  async saveLiveGame(game: ApiGame): Promise<void> {
     const session = getNeo4jSession();
     const baseGameQuery = `
 MATCH (l:League { id: $leagueId })
