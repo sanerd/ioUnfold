@@ -1,7 +1,8 @@
 import { getNeo4jSession } from '../config/neo4j';
-import { ApiSeason, ApiLeague } from '@iounfold/database-schemas';
+import { ApiSeason, ApiClub, ApiLeague } from '@iounfold/database-schemas';
 
 export class CompetitionRepository {
+  // Speichert eine Saison in der Neo4j-Datenbank
   async saveSeason(season: ApiSeason): Promise<void> {
     const session = getNeo4jSession();
     const query = `
@@ -15,6 +16,27 @@ SET s.name = $name
       await session.close();
     }
   }
+
+  // Speichert eine Clubs in der Neo4j-Datenbank und verknüpft sie mit der Saison
+  async saveClub(club: ApiClub): Promise<void> {
+    const session = getNeo4jSession();
+    const query = `
+MATCH (s:Season { id: $seasonId })
+MERGE (c:Club { id: $id })
+SET c.name = $name
+MERGE (s)-[:HAS_CLUB]->(c)
+`;
+    try {
+      await session.executeWrite((tx) =>
+        tx.run(query, { ...club, seasonId: club.seasonId })
+      );
+      console.log(` Club "${club.name}" (ID: ${club.id}) verknüpft.`);
+    } finally {
+      await session.close();
+    }
+  }
+
+  // Speichert eine Liga in der Neo4j-Datenbank und verknüpft sie mit der Saison
   async saveLeague(league: ApiLeague): Promise<void> {
     const session = getNeo4jSession();
     const query = `

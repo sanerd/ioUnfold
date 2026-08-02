@@ -1,16 +1,15 @@
-// mcp-servers/mcp-floorball/src/services/unihockey.ts
 import {
-  ApiGameSummary,
   ApiSeason,
-  ApiLeague
+  ApiClub,
+  ApiTeam,
+  ApiLeague,
+  ApiGameSummary
 } from '@iounfold/database-schemas';
 
 export class UnihockeyApiService {
   private baseUrl = process.env.BASE_URL || 'https://api-v2.swissunihockey.ch';
 
-  /**
-   * Holt die verfügbaren Saisons vom Verband
-   */
+  // Holt die verfügbaren Saisons vom Verband
   async getSeasons(): Promise<ApiSeason[]> {
     console.log(`📡 [API-Service] Rufe Saisons von Swiss Unihockey ab...`);
     const response = await fetch(`${this.baseUrl}/api/seasons`);
@@ -22,23 +21,56 @@ export class UnihockeyApiService {
     }
 
     const data = await response.json();
+    const seasons: ApiSeason[] = [];
 
     if (!data.entries) return [];
 
-    return data.entries.map((entry: any) => {
-      // Extrahiere die ID direkt aus set_in_context.season (z.B. 2025)
-      const seasonId = entry.set_in_context?.season?.toString() || 'unknown';
-
-      return {
-        id: seasonId, // Wird "2025"
-        name: `Saison ${entry.text}` // Wird "Saison 2025/26"
-      };
-    });
+    for (const entry of data.entries) {
+      const seasonId = entry.set_in_context.season.toString(); // z.B. "2025"
+      const seasonName = entry.text; // z.B. "Saison 2025/26"
+      seasons.push({
+        id: seasonId,
+        name: seasonName
+      });
+    }
+    return seasons;
   }
 
-  /**
-   * Holt die Ligen einer spezifischen Saison
-   */
+  // Holt die Clubs einer spezifischen Saison
+  async getClubs(seasonId: string): Promise<ApiClub[]> {
+    console.log(`📡 [API-Service] Rufe Clubs für Saison-ID ${seasonId} ab...`);
+
+    // Die API erwartet die Saison-ID als Query-Parameter
+    const response = await fetch(
+      `${this.baseUrl}/api/clubs?season=${seasonId}`
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Swiss Unihockey API Fehler (Clubs): ${response.statusText}`
+      );
+    }
+
+    const data = await response.json();
+    const clubs: ApiClub[] = [];
+
+    if (!data.entries) return [];
+
+    for (const entry of data.entries) {
+      const clubId = entry.set_in_context.club_id.toString(); // '463828' etc.
+      const clubName = entry.text; // "Floorball Köniz Bern" etc.
+
+      clubs.push({
+        id: clubId,
+        name: clubName,
+        seasonId: seasonId
+      });
+    }
+
+    return clubs;
+  }
+
+  // Holt die Ligen einer spezifischen Saison
   async getLeagues(seasonId: string): Promise<ApiLeague[]> {
     console.log(`📡 [API-Service] Rufe Ligen für Saison-ID ${seasonId} ab...`);
 
@@ -59,17 +91,15 @@ export class UnihockeyApiService {
     if (!data.entries) return [];
 
     for (const entry of data.entries) {
-      const leagueId = entry.set_in_context.league;
-      const gameClassId = entry.set_in_context.game_class;
-      const name = entry.text; // "Herren NLB" etc.
+      const leagueId = entry.set_in_context.league.toString();
+      const gameClassId = entry.set_in_context.game_class.toString();
+      const leagueName = entry.text; // "Herren NLB" etc.
 
-      // Wir flachen die Struktur hier direkt ab, damit das Repository
-      // glücklich ist und alle Felder wie 'seasonId' vorhanden sind.
       leagues.push({
         leagueId: leagueId,
         gameClassId: gameClassId,
-        name: name,
-        seasonId: seasonId // Garantiert, dass league.seasonId existiert!
+        name: leagueName,
+        seasonId: seasonId
       });
     }
 
@@ -79,6 +109,7 @@ export class UnihockeyApiService {
   /**
    * Holt alle Spiele einer bestimmten Liga in einer Saison
    */
+  /* 
   async getGamesByLeague(
     seasonId: string,
     leagueId: number

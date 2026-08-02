@@ -67,10 +67,17 @@ async function initialSync() {
       );
       return;
     }
-
     await compRepository.saveSeason(currentSeason);
 
-    // 2. Alle Ligen dieser Saison holen und anlegen
+    // 2. Alle Clubs dieser Saison holen und anlegen
+    const clubs = await apiService.getClubs(targetSeasonId);
+    console.log(`✅ ${clubs.length} Clubs für die Saison gefunden.`);
+
+    for (const club of clubs) {
+      await compRepository.saveClub(club);
+    }
+
+    // 4. Alle Ligen dieser Saison holen und anlegen
     const leagues = await apiService.getLeagues(targetSeasonId);
     console.log(`✅ ${leagues.length} Ligen für die Saison gefunden.`);
 
@@ -78,7 +85,8 @@ async function initialSync() {
       await compRepository.saveLeague(league);
 
       // 3. JEDES Spiel dieser Liga aus der Saison 2025/26 in den Graphen importieren
-      try {
+      /*try {
+        
         const games = await apiService.getGamesByLeague(
           targetSeasonId,
           league.leagueId
@@ -95,7 +103,7 @@ async function initialSync() {
         console.error(
           `   └─ ❌ Fehler beim Spiele-Import für Liga ${league.name}:`
         );
-      }
+      }*/
     }
 
     console.log(

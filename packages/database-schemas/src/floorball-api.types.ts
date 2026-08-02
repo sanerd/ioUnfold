@@ -4,10 +4,25 @@ export interface ApiSeason {
 }
 
 export interface ApiLeague {
-  leagueId: number; // Eindeutige ID (set_in_context.league)
-  gameClassId: number; // Identifikator für die Spielklasse (set_in_context.game_class)
+  leagueId: string; // Eindeutige ID (set_in_context.league)
+  gameClassId: string; // Identifikator für die Spielklasse (set_in_context.game_class)
   name: string; // z.B. "Herren L-UPL"
-  seasonId: string;
+  seasonId: string; // Zugehörige Saison-ID (z.B. "2025")
+}
+
+export interface ApiClub {
+  id: string; // Eindeutige ID des Vereins
+  name: string; // Name des Vereins
+  seasonId: string; // Zugehörige Saison-ID (z.B. "2025")
+}
+
+export interface ApiTeam {
+  id: string; // Eindeutige ID des Teams
+  name: string; // Name des Teams
+  clubId: string; // Zugehörige Vereins-ID
+  leagueId: string; // Zugehörige Liga-ID
+  gameClassId: string; // Zugehörige Spielklasse-ID
+  seasonId: string; // Zugehörige Saison-ID (z.B. "2025")
 }
 
 export interface ApiTeamSummary {
@@ -17,7 +32,7 @@ export interface ApiTeamSummary {
 
 export interface ApiGameSummary {
   id: string;
-  leagueId: number; // Mapping zur League
+  leagueId: string; // Zugehörige Liga-ID
   date: string;
   time: string;
   status: 'scheduled' | 'live' | 'played';

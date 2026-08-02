@@ -1,7 +1,7 @@
 services:
   # Instanz 1: TotalFloorball (Sport Analytics Engine)
   neo4j-floorball:
-    image: neo4j:5.20
+    image: neo4j:5.26.28-community
     container_name: iounfold-neo4j-floorball
     ports:
       - '7476:7474' # Web-Interface auf Port 7476 verschoben
@@ -18,7 +18,7 @@ services:
 
   # Instanz 2: Recipe Intelligence (Visual Recipe Analytics)
   neo4j-recipes:
-    image: neo4j:5.20
+    image: neo4j:5.26.28-community
     container_name: iounfold-neo4j-recipes
     ports:
       - '7477:7474' # Web-Interface auf Port 7477 verschoben
