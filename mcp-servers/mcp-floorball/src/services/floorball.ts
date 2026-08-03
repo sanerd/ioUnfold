@@ -22,19 +22,44 @@ export class UnihockeyApiService {
     }
 
     const data = await response.json();
-    const seasons: ApiSeason[] = [];
 
     if (!data.entries) return [];
 
-    for (const entry of data.entries) {
-      const seasonId = entry.set_in_context.season.toString(); // z.B. "2025"
-      const seasonName = entry.text; // z.B. "Saison 2025/26"
-      seasons.push({
-        id: seasonId,
-        name: seasonName
-      });
+    return data.entries.map((entry: any) => ({
+      id: entry.set_in_context.season.toString(), // z.B. "2025"
+      name: entry.text // z.B. "Saison 2025/26"
+    }));
+  }
+
+  // Holt die verfügbaren Ligen einer spezifischen Saison
+  async getLeagues(seasonId: string): Promise<ApiLeague[]> {
+    console.log(`📡 [API-Service] Rufe Ligen für Saison-ID ${seasonId} ab...`);
+
+    // Die API erwartet die Saison-ID als Query-Parameter
+    const response = await fetch(
+      `${this.baseUrl}/api/leagues?season=${seasonId}`
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Swiss Unihockey API Fehler (Leagues): ${response.statusText}`
+      );
     }
-    return seasons;
+
+    const data = await response.json();
+
+    if (!data.entries) return [];
+
+    return data.entries.map((entry: any) => ({
+      id:
+        entry.set_in_context.league.toString() +
+        '_' +
+        entry.set_in_context.game_class.toString(),
+      leagueSetId: entry.set_in_context.league.toString(),
+      gameClassId: entry.set_in_context.game_class.toString(),
+      name: entry.text,
+      seasonId
+    }));
   }
 
   // Holt die Clubs einer spezifischen Saison
@@ -53,7 +78,6 @@ export class UnihockeyApiService {
     }
 
     const data = await response.json();
-    const clubs: ApiClub[] = [];
 
     if (!data.entries) return [];
 
@@ -64,7 +88,7 @@ export class UnihockeyApiService {
     }));
   }
 
-  // Holt die Teams eines spezifischen Clubs in einer Saison
+  // Holt die Teams eines spezifischen Clubs in einer spezifischen Saison
   async getTeams(seasonId: string, clubId: string): Promise<ApiTeam[]> {
     console.log(
       `📡 [API-Service] Rufe Teams für Club-ID ${clubId} in Saison-ID ${seasonId} ab...`
@@ -89,40 +113,45 @@ export class UnihockeyApiService {
       id: entry.set_in_context.team_id.toString(),
       name: entry.text,
       clubId,
-      leagueId: '',
-      gameClassId: '',
+      groupId: '', // Wird später über die Gruppen-API gesetzt
       seasonId
     }));
   }
 
-  // Holt die Ligen einer spezifischen Saison
-  async getLeagues(seasonId: string): Promise<ApiLeague[]> {
-    console.log(`📡 [API-Service] Rufe Ligen für Saison-ID ${seasonId} ab...`);
+  // Holt die Gruppen der Teams eines spezifischen Clubs einer spezifischen Saison
+  async getGroups(seasonId: string, teamId: string): Promise<ApiGroup[]> {
+    console.log(
+      `📡 [API-Service] Rufe Gruppe für die Team-ID ${teamId} in Saison-ID ${seasonId} ab...`
+    );
 
-    // Die API erwartet die Saison-ID als Query-Parameter
+    // Die API erwartet die Saison-ID und Club-ID als Query-Parameter
     const response = await fetch(
-      `${this.baseUrl}/api/leagues?season=${seasonId}`
+      `${this.baseUrl}/api/games?mode=team&season=${seasonId}&team_id=${teamId}`
     );
 
     if (!response.ok) {
       throw new Error(
-        `Swiss Unihockey API Fehler (Leagues): ${response.statusText}`
+        `Swiss Unihockey API Fehler (Gruppen): ${response.statusText}`
       );
     }
 
     const data = await response.json();
 
-    if (!data.entries) return [];
+    if (!data.data.tabs[0]) return [];
 
-    return data.entries.map((entry: any) => ({
-      leagueId: entry.set_in_context.league.toString(),
-      gameClassId: entry.set_in_context.game_class.toString(),
-      name: entry.text,
-      seasonId
-    }));
+    return [
+      {
+        id: data.data.tabs[0].link.ids[3].toString(),
+        name: data.data.tabs[0].text,
+        leagueId:
+          data.data.tabs[0].link.ids[1].toString() +
+          '_' +
+          data.data.tabs[0].link.ids[2].toString()
+      }
+    ];
   }
 
-  // Holt die Gruppen einer spezifischen Liga in einer Saison
+  /* // Holt die Gruppen einer spezifischen Liga in einer Saison
   async getGroups(
     seasonId: string,
     leagueId: string,
@@ -154,7 +183,7 @@ export class UnihockeyApiService {
       gameClassId,
       seasonId
     }));
-  }
+  } */
 
   /**
    * Holt alle Spiele einer bestimmten Liga in einer Saison

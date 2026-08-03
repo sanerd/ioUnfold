@@ -69,7 +69,15 @@ async function initialSync() {
     }
     await compRepository.saveSeason(currentSeason);
 
-    // 2. Alle Clubs dieser Saison holen und anlegen
+    // 2. Alle Ligen dieser Saison holen und anlegen
+    const leagues = await apiService.getLeagues(targetSeasonId);
+    console.log(`✅ ${leagues.length} Ligen für die Saison gefunden.`);
+
+    for (const league of leagues) {
+      await compRepository.saveLeague(league);
+    }
+
+    // 3. Alle Clubs dieser Saison holen und anlegen
     const clubs = await apiService.getClubs(targetSeasonId);
     console.log(`✅ ${clubs.length} Clubs für die Saison gefunden.`);
 
@@ -79,11 +87,24 @@ async function initialSync() {
       // 3. Alle Teams dieses Clubs in dieser Saison holen und anlegen
       try {
         const teams = await apiService.getTeams(targetSeasonId, club.id);
-        console.log(
-          `📡 [API-Service] Rufe ${teams.length} Teams ab für Club ${club.name}...`
-        );
 
         for (const team of teams) {
+          // 4. Alle Gruppen dieser Liga in dieser Saison holen und anlegen
+          try {
+            const groups = await apiService.getGroups(targetSeasonId, team.id);
+
+            team.groupId = groups.length > 0 ? groups[0].id : ''; // Setze die groupId des Teams, falls Gruppen vorhanden sind
+
+            for (const group of groups) {
+              await compRepository.saveGroup(group);
+            }
+          } catch (groupsError) {
+            // Wenn die Groups-API zickt, loggen wir es, brechen aber die Ligen-Schleife NICHT ab
+            console.error(
+              `   └─ ❌ Fehler beim Gruppen-Import für Team ${team.name}:`,
+              groupsError
+            );
+          }
           await compRepository.saveTeam(team);
         }
       } catch (teamsError) {
@@ -93,57 +114,6 @@ async function initialSync() {
           teamsError
         );
       }
-    }
-
-    // 4. Alle Ligen dieser Saison holen und anlegen
-    const leagues = await apiService.getLeagues(targetSeasonId);
-    console.log(`✅ ${leagues.length} Ligen für die Saison gefunden.`);
-
-    for (const league of leagues) {
-      await compRepository.saveLeague(league);
-
-      // 5. Alle Gruppen dieser Liga in dieser Saison holen und anlegen
-      try {
-        const groups = await apiService.getGroups(
-          targetSeasonId,
-          league.leagueId,
-          league.gameClassId
-        );
-        console.log(
-          `📡 [API-Service] Rufe ${groups.length} Gruppen ab für Liga ${league.name}...`
-        );
-
-        for (const group of groups) {
-          await compRepository.saveGroup(group);
-        }
-      } catch (groupsError) {
-        // Wenn die Groups-API zickt, loggen wir es, brechen aber die Ligen-Schleife NICHT ab
-        console.error(
-          `   └─ ❌ Fehler beim Gruppen-Import für Liga ${league.name}:`,
-          groupsError
-        );
-      }
-
-      // 3. JEDES Spiel dieser Liga aus der Saison 2025/26 in den Graphen importieren
-      /*try {
-        
-        const games = await apiService.getGamesByLeague(
-          targetSeasonId,
-          league.leagueId
-        );
-        console.log(
-          `📡 [API-Service] Rufe ${games.length} Spiele ab für ${league.name}...`
-        );
-
-        for (const game of games) {
-          await gameRepository.saveLiveGame(game);
-        }
-      } catch (gamesError) {
-        // Wenn die Games-API zickt, loggen wir es, brechen aber die Ligen-Schleife NICHT ab
-        console.error(
-          `   └─ ❌ Fehler beim Spiele-Import für Liga ${league.name}:`
-        );
-      }*/
     }
 
     console.log(

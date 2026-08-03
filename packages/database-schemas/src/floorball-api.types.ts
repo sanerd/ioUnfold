@@ -4,10 +4,17 @@ export interface ApiSeason {
 }
 
 export interface ApiLeague {
-  leagueId: string; // Eindeutige ID (set_in_context.league)
-  gameClassId: string; // Identifikator für die Spielklasse (set_in_context.game_class)
+  id: string; // Eindeutige ID der Liga
+  leagueSetId: string; // Identifikator für das Liga-Set
+  gameClassId: string; // Identifikator für die Spielklasse
   name: string; // z.B. "Herren L-UPL"
   seasonId: string; // Zugehörige Saison-ID (z.B. "2025")
+}
+
+export interface ApiGroup {
+  id: string; // Eindeutige ID der Gruppe
+  name: string; // Name der Gruppe
+  leagueId: string; // Zugehörige Liga-ID
 }
 
 export interface ApiClub {
@@ -20,26 +27,23 @@ export interface ApiTeam {
   id: string; // Eindeutige ID des Teams
   name: string; // Name des Teams
   clubId: string; // Zugehörige Vereins-ID
-  leagueId: string; // Zugehörige Liga-ID
-  gameClassId: string; // Zugehörige Spielklasse-ID
+  groupId: string; // Zugehörige Gruppen-ID
   seasonId: string; // Zugehörige Saison-ID (z.B. "2025")
 }
 
-export interface ApiTeamSummary {
+export interface ApiGame {
   id: string;
-  name: string;
-}
-
-export interface ApiGameSummary {
-  id: string;
+  seasonId: string; // Zugehörige Saison-ID (z.B. "2025")
   leagueId: string; // Zugehörige Liga-ID
+  gameClassId: string; // Zugehörige Spielklasse-ID
+  groupId: string; // Zugehörige Gruppen-ID
   date: string;
   time: string;
   status: 'scheduled' | 'live' | 'played';
   scoreHome: number | null;
   scoreAway: number | null;
-  homeTeam: ApiTeamSummary;
-  awayTeam: ApiTeamSummary;
+  homeTeam: ApiTeam;
+  awayTeam: ApiTeam;
   events: ApiGameEvent[];
 }
 
