@@ -23,6 +23,9 @@ importers:
       '@iounfold/database-schemas':
         specifier: workspace:*
         version: link:../../packages/database-schemas
+      '@iounfold/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@modelcontextprotocol/sdk':
         specifier: ^0.6.0
         version: 0.6.1
@@ -52,6 +55,18 @@ importers:
       tsup:
         specifier: ^8.1.0
         version: 8.5.1(typescript@5.9.3)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/utils:
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(typescript@5.9.3)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
 packages:
 

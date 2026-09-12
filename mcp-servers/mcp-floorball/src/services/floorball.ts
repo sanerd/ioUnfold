@@ -1,17 +1,19 @@
 import {
-  ApiSeason,
-  ApiClub,
-  ApiTeam,
-  ApiLeague,
-  ApiGroup,
-  ApiGame
+  SwissunihockeyApiSeason,
+  Season,
+  SwissunihockeyApiClub,
+  SwissunihockeyApiTeam,
+  SwissunihockeyApiLeague,
+  League,
+  SwissunihockeyApiGroup,
+  SwissunihockeyApiGame
 } from '@iounfold/database-schemas';
 
 export class UnihockeyApiService {
   private baseUrl = process.env.BASE_URL || 'https://api-v2.swissunihockey.ch';
 
   // Holt die verfügbaren Saisons vom Verband
-  async getSeasons(): Promise<ApiSeason[]> {
+  async getSeasons(): Promise<SwissunihockeyApiSeason[]> {
     console.log(`📡 [API-Service] Rufe Saisons von Swiss Unihockey ab...`);
     const response = await fetch(`${this.baseUrl}/api/seasons`);
 
@@ -32,7 +34,7 @@ export class UnihockeyApiService {
   }
 
   // Holt die verfügbaren Ligen einer spezifischen Saison
-  async getLeagues(seasonId: string): Promise<ApiLeague[]> {
+  async getLeagues(seasonId: string): Promise<SwissunihockeyApiLeague[]> {
     console.log(`📡 [API-Service] Rufe Ligen für Saison-ID ${seasonId} ab...`);
 
     // Die API erwartet die Saison-ID als Query-Parameter
@@ -63,7 +65,7 @@ export class UnihockeyApiService {
   }
 
   // Holt die Clubs einer spezifischen Saison
-  async getClubs(seasonId: string): Promise<ApiClub[]> {
+  async getClubs(seasonId: string): Promise<SwissunihockeyApiClub[]> {
     console.log(`📡 [API-Service] Rufe Clubs für Saison-ID ${seasonId} ab...`);
 
     // Die API erwartet die Saison-ID als Query-Parameter
@@ -89,7 +91,10 @@ export class UnihockeyApiService {
   }
 
   // Holt die Teams eines spezifischen Clubs in einer spezifischen Saison
-  async getTeams(seasonId: string, clubId: string): Promise<ApiTeam[]> {
+  async getTeams(
+    seasonId: string,
+    clubId: string
+  ): Promise<SwissunihockeyApiTeam[]> {
     console.log(
       `📡 [API-Service] Rufe Teams für Club-ID ${clubId} in Saison-ID ${seasonId} ab...`
     );
@@ -113,15 +118,18 @@ export class UnihockeyApiService {
       id: entry.set_in_context.team_id.toString(),
       name: entry.text,
       clubId,
-      groupId: '', // Wird später über die Gruppen-API gesetzt
+      groupId: '', // Wird später beim Abrufen der Gruppen gesetzt
       seasonId
     }));
   }
 
   // Holt die Gruppen der Teams eines spezifischen Clubs einer spezifischen Saison
-  async getGroups(seasonId: string, teamId: string): Promise<ApiGroup[]> {
+  async getGroups(
+    seasonId: string,
+    teamId: string
+  ): Promise<SwissunihockeyApiGroup[]> {
     console.log(
-      `📡 [API-Service] Rufe Gruppe für die Team-ID ${teamId} in Saison-ID ${seasonId} ab...`
+      `📡 [API-Service] Rufe Gruppen für die Team-ID ${teamId} in Saison-ID ${seasonId} ab...`
     );
 
     // Die API erwartet die Saison-ID und Club-ID als Query-Parameter
@@ -137,7 +145,11 @@ export class UnihockeyApiService {
 
     const data = await response.json();
 
-    if (!data.data.tabs[0]) return [];
+    if (!data.data.tabs || !data.data.regions) return [];
+
+    /* const games = data.data.regions[0].rows.map((game: any) => ({
+      gameId: game.link.ids[0].toString()
+    }));
 
     return [
       {
@@ -146,44 +158,78 @@ export class UnihockeyApiService {
         leagueId:
           data.data.tabs[0].link.ids[1].toString() +
           '_' +
-          data.data.tabs[0].link.ids[2].toString()
+          data.data.tabs[0].link.ids[2].toString(),
+        games: games
       }
-    ];
+    ]; */
+
+    const groups = data.data.tabs.map((tab: any) => ({
+      id: tab.link.ids[3].toString(),
+      name: tab.text,
+      leagueId: tab.link.ids[1].toString() + '_' + tab.link.ids[2].toString()
+    }));
+
+    const games = data.data.regions.map((region: any, index: number) =>
+      region.rows.map((game: any) => ({
+        id: game.link.ids[0].toString(),
+        groupId: groups[index].id
+      }))
+    );
+
+    groups.forEach((group: SwissunihockeyApiGroup, index: number) => {
+      group.games = games[index] || [];
+    });
+
+    return groups;
   }
 
-  /* // Holt die Gruppen einer spezifischen Liga in einer Saison
-  async getGroups(
-    seasonId: string,
-    leagueId: string,
-    gameClassId: string
-  ): Promise<ApiGroup[]> {
+  // Holt die Spiele eines Teams eines spezifischen Clubs einer spezifischen Saison
+  async getGame(
+    gameId: string,
+    groupId: string,
+    seasonId: string
+  ): Promise<SwissunihockeyApiGame[]> {
     console.log(
-      `📡 [API-Service] Rufe Gruppen für Liga-ID ${leagueId} und der Spielklasse-ID ${gameClassId} ab...`
+      `📡 [API-Service] Rufe Spiel mit ID ${gameId} in Gruppe ${groupId} ab...`
     );
 
-    // Die API erwartet die Liga-ID und Spielklasse-ID als Query-Parameter
-    const response = await fetch(
-      `${this.baseUrl}/api/groups?season=${seasonId}&league=${leagueId}&game_class=${gameClassId}`
-    );
+    // Die API erwartet die Saison-ID und Club-ID als Query-Parameter
+    const response = await fetch(`${this.baseUrl}/api/games/${gameId}`);
 
     if (!response.ok) {
       throw new Error(
-        `Swiss Unihockey API Fehler (Groups): ${response.statusText}`
+        `Swiss Unihockey API Fehler (Spiele): ${response.statusText}`
       );
     }
 
-    const data: any = await response.json();
+    const data = await response.json();
 
-    if (!data.entries) return [];
+    if (!data.data.regions[0]) return [];
 
-    return data.entries.map((entry: any) => ({
-      id: entry.set_in_context.group.toString(),
-      name: entry.text,
-      leagueId,
-      gameClassId,
-      seasonId
+    return data.data.regions[0].rows.map((entry: any) => ({
+      id: gameId,
+      seasonId,
+      groupId,
+      datetime: new Date(
+        `${entry.cells[5].text[0].split('.')[2]}-${entry.cells[5].text[0].split('.')[1]}-${entry.cells[5].text[0].split('.')[0]}T${entry.cells[6].text[0]}:00`
+      ).toISOString(),
+      venueName: entry.cells[7].text[0] || '', // Optional, falls verfügbar
+      venueCoordinates: [entry.cells[7].link.x, entry.cells[7].link.y],
+      homeTeam: String(entry.cells[0].link.ids[0]) || '', // Optional, falls verfügbar
+      homeTeamLogo: entry.cells[0].image.url || '', // Optional, falls verfügbar
+      awayTeam: String(entry.cells[2].link.ids[0]) || '', // Optional, falls verfügbar
+      awayTeamLogo: entry.cells[2].image.url || '', // Optional, falls verfügbar
+      scoreHome:
+        entry.cells[4].text[0] && entry.cells[4].text[0].includes(':')
+          ? parseInt(entry.cells[4].text[0].split(':')[0], 10)
+          : null,
+      scoreAway:
+        entry.cells[4].text[0] && entry.cells[4].text[0].includes(':')
+          ? parseInt(entry.cells[4].text[0].split(':')[1], 10)
+          : null,
+      referees: [entry.cells[8].text[0] || '', entry.cells[9].text[0] || ''] // Optional, falls verfügbar
     }));
-  } */
+  }
 
   /**
    * Holt alle Spiele einer bestimmten Liga in einer Saison
@@ -255,7 +301,7 @@ export class UnihockeyApiService {
   /**
    * Fallback für das laufende Polling (Kompatibilität mit index.ts)
    */
-  async getLiveGames(): Promise<ApiGame[]> {
+  async getLiveGames(): Promise<SwissunihockeyApiGame[]> {
     // Da wir historische Daten holen, gibt es im Moment keine "Live"-Spiele.
     // Diese Methode bleibt für den Scheduler aktiv, liefert aber im historischen Kontext nichts zurück.
     return [];

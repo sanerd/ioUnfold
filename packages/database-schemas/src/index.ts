@@ -1,1 +1,1 @@
-export * from './floorball-api.types';
+export * from './floorball.types.js';

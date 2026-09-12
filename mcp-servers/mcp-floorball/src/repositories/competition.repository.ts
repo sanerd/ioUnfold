@@ -1,15 +1,9 @@
 import { getNeo4jSession } from '../config/neo4j';
-import {
-  ApiSeason,
-  ApiClub,
-  ApiTeam,
-  ApiLeague,
-  ApiGroup
-} from '@iounfold/database-schemas';
+import { Season, Club, Team, League, Group } from '@iounfold/database-schemas';
 
 export class CompetitionRepository {
   // Speichert eine Saison in der Neo4j-Datenbank
-  async saveSeason(season: ApiSeason): Promise<void> {
+  async saveSeason(season: Season): Promise<void> {
     const session = getNeo4jSession();
     const query = `
       MERGE (s:Season { id: $id })
@@ -25,7 +19,7 @@ export class CompetitionRepository {
   }
 
   // Speichert eine Liga in der Neo4j-Datenbank und verknüpft sie mit der Saison
-  async saveLeague(league: ApiLeague): Promise<void> {
+  async saveLeague(league: League): Promise<void> {
     const session = getNeo4jSession();
     const query = `
       MERGE (s:Season { id: $seasonId })
@@ -63,7 +57,7 @@ export class CompetitionRepository {
   }
 
   // Speichert einen Club in der Neo4j-Datenbank und verknüpft sie mit der Saison
-  async saveClub(club: ApiClub): Promise<void> {
+  async saveClub(club: Club): Promise<void> {
     const session = getNeo4jSession();
     const query = `
       // 1. Der Club-Knoten bleibt zeitlos (KEINE seasonId im SET)
@@ -98,7 +92,7 @@ export class CompetitionRepository {
   }
 
   //Speichert ein Team in der Neo4j-Datenbank und verknüpft es mit dem Club, der Liga und der Saison
-  async saveTeam(team: ApiTeam): Promise<void> {
+  async saveTeam(team: Team): Promise<void> {
     const session = getNeo4jSession();
     const query = `
       // 1. Team-Knoten anlegen oder aktualisieren (zeitlos)
@@ -128,7 +122,7 @@ export class CompetitionRepository {
         })
       );
       console.log(
-        `Team "${team.name}" (ID: ${team.id}) erfolgreich für Saison ${team.seasonId} in Gruppe ${team.groupId} gespeichert.`
+        `Team "${team.name}" (ID: ${team.id}) in Gruppe "${team.groupId}" für Saison ${team.seasonId} erfolgreich gespeichert.  `
       );
     } catch (error) {
       console.error(`Fehler beim Speichern des Teams ${team.id}:`, error);
@@ -139,7 +133,7 @@ export class CompetitionRepository {
   }
 
   // Speichert eine Gruppe in der Neo4j-Datenbank und verknüpft sie mit der Liga, Spielklasse und Saison
-  async saveGroup(group: ApiGroup): Promise<void> {
+  async saveGroup(group: Group): Promise<void> {
     const session = getNeo4jSession();
     const query = `
       // 1. Sicherstellen, dass die übergeordnete Liga existiert

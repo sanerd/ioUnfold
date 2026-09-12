@@ -1,8 +1,59 @@
 import { getNeo4jSession } from '../config/neo4j';
-import { ApiGame } from '@iounfold/database-schemas';
+import { Game } from '@iounfold/database-schemas';
 
 export class GameRepository {
-  async saveLiveGame(game: ApiGame): Promise<void> {
+  async saveGame(game: Game): Promise<void> {
+    const session = getNeo4jSession();
+    const query = `UNWIND $games AS gameData
+
+// 1. Spiel erstellen oder aktualisieren
+MERGE (g:Game {id: gameData.id})
+SET g.datetime = datetime(gameData.datetime),
+    g.scoreHome = gameData.scoreHome,
+    g.scoreAway = gameData.scoreAway,
+    g.referees = gameData.referees
+
+// 2. Saison verknüpfen
+MERGE (s:Season {id: gameData.seasonId})
+MERGE (g)-[:IN_SEASON]->(s)
+
+// 3. Gruppe verknüpfen
+MERGE (grp:Group {id: gameData.groupId})
+MERGE (g)-[:IN_GROUP]->(grp)
+
+// 4. Heimteam verknüpfen & optionales Logo setzen
+MERGE (home:Team {id: gameData.homeTeam})
+ON CREATE SET home.logo = gameData.homeTeamLogo
+ON MATCH SET home.logo = COALESCE(gameData.homeTeamLogo, home.logo)
+MERGE (g)-[:HOME_TEAM]->(home)
+
+// 5. Auswärtsteam verknüpfen & optionales Logo setzen
+MERGE (away:Team {id: gameData.awayTeam})
+ON CREATE SET away.logo = gameData.awayTeamLogo
+ON MATCH SET away.logo = COALESCE(gameData.awayTeamLogo, away.logo)
+MERGE (g)-[:AWAY_TEAM]->(away)
+
+// 6. Austragungsort (Venue) verknüpfen (Spatial Point für Koordinaten)
+WITH g, gameData
+WHERE gameData.venueName IS NOT NULL AND gameData.venueName <> ''
+MERGE (v:Venue {name: gameData.venueName})
+ON CREATE SET v.location = point({
+  latitude: gameData.venueCoordinates[0], 
+  longitude: gameData.venueCoordinates[1]
+})
+MERGE (g)-[:PLAYED_AT]->(v)`;
+    try {
+      await session.executeWrite((tx) => tx.run(query, game));
+      console.log(` Spiel-Knoten "${game.id}" verknüpft.`);
+    } catch (error) {
+      console.error(`Fehler beim Speichern des Spiels ${game.id}:`, error);
+      throw error;
+    } finally {
+      await session.close();
+    }
+  }
+
+  /* async saveLiveGame(game: Game): Promise<void> {
     const session = getNeo4jSession();
     const baseGameQuery = `
 MATCH (l:League { id: $leagueId })
@@ -64,5 +115,5 @@ verarbeitet.`);
     } finally {
       await session.close();
     }
-  }
+  }*/
 }
