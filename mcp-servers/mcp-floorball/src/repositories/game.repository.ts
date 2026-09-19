@@ -1,8 +1,11 @@
 import { getNeo4jSession } from '../config/neo4j';
-import { Game } from '@iounfold/database-schemas';
+import { SwissunihockeyApiGame } from '@iounfold/database-schemas';
 
 export class GameRepository {
-  async saveGame(game: Game): Promise<void> {
+  // Falls die Methode ein einzelnes Spiel oder ein Array entgegennimmt:
+  async saveGame(
+    game: SwissunihockeyApiGame | SwissunihockeyApiGame[]
+  ): Promise<void> {
     const session = getNeo4jSession();
     const query = `UNWIND $games AS gameData
 
@@ -38,15 +41,23 @@ WITH g, gameData
 WHERE gameData.venueName IS NOT NULL AND gameData.venueName <> ''
 MERGE (v:Venue {name: gameData.venueName})
 ON CREATE SET v.location = point({
-  latitude: gameData.venueCoordinates[0], 
-  longitude: gameData.venueCoordinates[1]
+  latitude: gameData.venueLatitude, 
+  longitude: gameData.venueLongitude
 })
 MERGE (g)-[:PLAYED_AT]->(v)`;
+
     try {
-      await session.executeWrite((tx) => tx.run(query, game));
-      console.log(` Spiel-Knoten "${game.id}" verknüpft.`);
+      // Stellen sicher, dass wir immer ein Array an $games übergeben:
+      const gamesArray = Array.isArray(game) ? game : [game];
+
+      // HIER DIE ÄNDERUNG: { games: gamesArray } statt game
+      await session.executeWrite((tx) => tx.run(query, { games: gamesArray }));
+
+      const logId = Array.isArray(game) ? `${game.length} Spiele` : game.id;
+      console.log(` Spiel-Knoten "${logId}" verknüpft.`);
     } catch (error) {
-      console.error(`Fehler beim Speichern des Spiels ${game.id}:`, error);
+      const logId = Array.isArray(game) ? 'Array' : game.id;
+      console.error(`Fehler beim Speichern des Spiels ${logId}:`, error);
       throw error;
     } finally {
       await session.close();

@@ -71,7 +71,8 @@ export interface SwissunihockeyApiGame {
   groupId: string; // Zugehörige Gruppen-ID
   datetime: string;
   venueName: string;
-  venueCoordinates: number[];
+  venueLongitude: number;
+  venueLatitude: number;
   homeTeam: string; // ID des Heimteams
   homeTeamLogo?: string; // Optionales Logo des Heimteams
   awayTeam: string; // ID des Auswärtsteams
@@ -87,7 +88,8 @@ export interface Game {
   groupId: string; // Zugehörige Gruppen-ID
   datetime: string;
   venueName: string;
-  venueCoordinates: number[];
+  venueLongitude: number;
+  venueLatitude: number;
   homeTeam: string; // ID des Heimteams
   homeTeamLogo?: string; // Optionales Logo des Heimteams
   awayTeam: string; // ID des Auswärtsteams

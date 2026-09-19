@@ -50,108 +50,8 @@ async function runIngestionPipeline() {
   }
 }
 
-/* async function initialSync() {
-  console.log(
-    '\n🏗️ [Startup] Starte historischen Deep-Import für Saison 2025/2026...'
-  );
-
-  const targetSeasonId = '2025'; // Entspricht Saison 2025/26 bei Swiss Unihockey
-
-  try {
-    // 1. Saisons synchronisieren
-    const seasons = await apiService.getSeasons();
-    const currentSeason = seasons.find((s) => s.id === targetSeasonId);
-
-    if (!currentSeason) {
-      console.error(
-        `❌ Saison ${targetSeasonId} wurde auf der API nicht gefunden.`
-      );
-      return;
-    }
-    await compRepository.saveSeason(currentSeason);
-
-    // 2. Alle Ligen dieser Saison holen und anlegen
-    const leagues = await apiService.getLeagues(targetSeasonId);
-    console.log(`✅ ${leagues.length} Ligen für die Saison gefunden.`);
-
-    for (const league of leagues) {
-      await compRepository.saveLeague(league);
-    }
-
-    // 3. Alle Clubs dieser Saison holen und anlegen
-    const clubs = await apiService.getClubs(targetSeasonId);
-    console.log(`✅ ${clubs.length} Clubs für die Saison gefunden.`);
-
-    const duplicateGames: any[] = [];
-    const duplicateGroups: any[] = [];
-
-    for (const club of clubs) {
-      await compRepository.saveClub(club);
-
-      // 3. Alle Teams dieses Clubs in dieser Saison holen und anlegen
-      try {
-        const teams = await apiService.getTeams(targetSeasonId, club.id);
-        console.log(
-          `✅ ${teams.length} Teams für den Club ${club.name} in der Saison gefunden.`
-        );
-
-        for (const team of teams) {
-          // 4. Alle Gruppen dieser Liga in dieser Saison holen und anlegen
-          try {
-            const groups = await apiService.getGroups(targetSeasonId, team.id);
-
-            team.groupId = groups.length > 0 ? groups[0].id : ''; // Setze die groupId des Teams, falls Gruppen vorhanden sind
-
-            duplicateGames.push(...groups.flatMap((group) => group.games));
-            duplicateGroups.push(...groups);
-          } catch (groupsError) {
-            // Wenn die Groups-API zickt, loggen wir es, brechen aber die Ligen-Schleife NICHT ab
-            console.error(
-              `   └─ ❌ Fehler beim Gruppen-Import für Team ${team.name}:`,
-              groupsError
-            );
-          }
-          await compRepository.saveTeam(team);
-        }
-      } catch (teamsError) {
-        // Wenn die Teams-API zickt, loggen wir es, brechen aber die Clubs-Schleife NICHT ab
-        console.error(
-          `   └─ ❌ Fehler beim Team-Import für Club ${club.name}:`,
-          teamsError
-        );
-      }
-    }
-
-    const uniqueGroups = removeDuplicatesById(duplicateGroups);
-    console.log(
-      `✅ ${uniqueGroups.length} Gruppen für die Saison ${targetSeasonId} gefunden.`
-    );
-
-    for (const group of uniqueGroups) {
-      await compRepository.saveGroup(group);
-    }
-
-    console.log(duplicateGames);
-    const uniqueGames = removeDuplicatesById(duplicateGames);
-    console.log(uniqueGames);
-    console.log(
-      `✅ ${uniqueGames.length} Spiele in ${uniqueGroups.length} Gruppen für die Saison ${targetSeasonId} gefunden.`
-    );
-
-    console.log(
-      '\n🎯 [Startup] Historischer Daten-Import für 2025/26 erfolgreich abgeschlossen!'
-    );
-  } catch (error) {
-    console.error('❌ Kritischer Fehler beim historischen Import:', error);
-  }
-} */
-
-async function initialSync() {
-  console.log(
-    '\n🏗️ [Startup] Starte historischen Deep-Import für Saison 2025/2026...'
-  );
-
-  const targetSeasonId = '2025'; // Entspricht Saison 2025/26 bei Swiss Unihockey
+async function initialSync(targetSeasonId = '2025') {
+  console.log('\n🏗️ [Startup] Starte den initialen Daten-Import...');
 
   try {
     // ==========================================
@@ -200,7 +100,7 @@ async function initialSync() {
             rawGames.push(...groups.flatMap((group) => group.games));
           } catch (groupsError) {
             console.error(
-              `   └─ ❌ Fehler beim Gruppen-Import für Team ${team.name}:`,
+              `   └─ ❌ Fehler beim Abrufen der Gruppen für Team ${team.name}:`,
               groupsError
             );
           }
@@ -208,7 +108,7 @@ async function initialSync() {
         }
       } catch (teamsError) {
         console.error(
-          `   └─ ❌ Fehler beim Team-Import für Club ${club.name}:`,
+          `   └─ ❌ Fehler beim Abrufen der Teams für Club ${club.name}:`,
           teamsError
         );
       }
@@ -231,6 +131,7 @@ async function initialSync() {
           game.groupId,
           targetSeasonId
         );
+
         extractedGameDetails.push(gameDetails);
       } catch (gameError) {
         console.error(
@@ -274,17 +175,20 @@ async function initialSync() {
     }
 
     console.log(
-      '\n🎯 [Startup] Historischer Daten-Import für 2025/26 erfolgreich abgeschlossen!'
+      `\n🎯 [Startup] Initialer Daten-Import für ${currentSeason.name} erfolgreich abgeschlossen!`
     );
   } catch (error) {
-    console.error('❌ Kritischer Fehler beim historischen Import:', error);
+    console.error(
+      '❌ Kritischer Fehler beim initialen Daten-Import für ${currentSeason.name}:',
+      error
+    );
   }
 }
 
 // Graceful Shutdown
 async function gracefulShutdown(signal: string) {
   console.log(`
-${signal} empfangen. Schließe Treiber...`);
+${signal} empfangen. Schliesse Treiber...`);
   if (schedulerTimeout) clearTimeout(schedulerTimeout);
   try {
     await driver.close();
