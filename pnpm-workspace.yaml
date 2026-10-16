@@ -1,6 +1,7 @@
 packages:
   - 'apps/*'
-  - 'mcp-servers/*'
+  - 'services/*'
+  - 'domains/*'
   - 'packages/*'
 allowBuilds:
   esbuild: true

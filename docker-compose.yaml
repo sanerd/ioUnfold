@@ -1,4 +1,28 @@
 services:
+  # Control Center Service
+  postgres-control-center:
+    image: postgres:16-alpine
+    container_name: iounfold-postgres-control-center
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg_control_center_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: iounfold
+      POSTGRES_PASSWORD: iounfold_password
+      POSTGRES_DB: iounfold_control
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@iounfold.com
+      PGADMIN_DEFAULT_PASSWORD: secretpassword # Hier dein Wunsch-Passwort eintragen
+    ports:
+      - '5050:80'
+    restart: unless-stopped
+
   # Instanz 1: TotalFloorball (Sport Analytics Engine)
   neo4j-floorball:
     image: neo4j:5.26.28-community
@@ -43,3 +67,5 @@ volumes:
   neo4j_recipes_logs:
   neo4j_recipes_import:
   neo4j_recipes_plugins:
+
+  pg_control_center_data:

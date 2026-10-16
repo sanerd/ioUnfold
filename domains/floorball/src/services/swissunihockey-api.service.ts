@@ -5,9 +5,9 @@ import {
   SwissunihockeyApiLeague,
   SwissunihockeyApiGroup,
   SwissunihockeyApiGame
-} from '@iounfold/database-schemas';
+} from '../types/swissunihockey-api.types.js';
 
-export class UnihockeyApiService {
+export class SwissunihockeyApiService {
   private baseUrl = process.env.BASE_URL || 'https://api-v2.swissunihockey.ch';
 
   // Holt die verfügbaren Saisons vom Verband

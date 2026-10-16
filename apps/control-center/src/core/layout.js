@@ -1,0 +1,10 @@
+import { jsx as _jsx, jsxs as _jsxs } from "hono/jsx/jsx-runtime";
+import { adminCss } from './styles.js';
+export const Layout = ({ currentModuleId, modules, children }) => {
+    return (_jsxs("html", { lang: 'de', "data-theme": 'dark', children: [_jsxs("head", { children: [_jsx("meta", { charset: 'UTF-8' }), _jsx("meta", { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }), _jsx("title", { children: "ioUnfold // Control Center" }), _jsx("link", { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css' }), _jsx("style", { children: adminCss }), _jsx("script", { src: 'https://unpkg.com/htmx.org@1.9.10' }), _jsx("script", { src: 'https://unpkg.com/htmx.org@1.9.10/dist/ext/sse.js' })] }), _jsxs("body", { children: [_jsxs("nav", { class: 'container-fluid', children: [_jsx("ul", { children: _jsxs("li", { children: [_jsx("span", { class: 'brand-title', children: "ioUnfold" }), _jsx("small", { style: 'margin-left: 0.5rem; color: var(--pico-muted-color); font-family: monospace;', children: "// Control Center" })] }) }), _jsx("ul", { children: modules.map((mod) => {
+                                    const isActive = currentModuleId === mod.id;
+                                    return (_jsx("li", { children: _jsxs("a", { href: mod.path, class: isActive ? 'contrast' : 'secondary', "hx-get": mod.path, "hx-target": '#main-content', "hx-push-url": 'true', style: isActive
+                                                ? 'border-bottom: 2px solid var(--pico-primary);'
+                                                : '', children: [_jsx("span", { style: 'margin-right: 0.3rem;', children: mod.icon }), mod.title] }) }, mod.id));
+                                }) })] }), _jsx("main", { id: 'main-content', class: 'container', children: children })] })] }));
+};

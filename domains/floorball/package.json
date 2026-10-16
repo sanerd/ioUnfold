@@ -1,0 +1,33 @@
+{
+  "name": "@iounfold/domain-floorball",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@iounfold/db-client": "workspace:*",
+    "@iounfold/utils": "workspace:*",
+    "axios": "^1.8.1",
+    "dotenv": "^16.4.5",
+    "neo4j-driver": "^5.28.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}

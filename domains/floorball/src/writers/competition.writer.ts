@@ -1,18 +1,16 @@
-import { getNeo4jSession } from '../config/neo4j';
-import { Season, Club, Team, League, Group } from '@iounfold/database-schemas';
+import { Driver } from 'neo4j-driver';
+import { Season, League, Group, Club, Team } from '../types/neo4j.types.js';
 
-export class CompetitionRepository {
-  // Speichert eine Saison in der Neo4j-Datenbank
+export class CompetitionWriter {
+  constructor(private driver: Driver) {}
+
   async saveSeason(season: Season): Promise<void> {
-    const session = getNeo4jSession();
-    const query = `
-      MERGE (s:Season { id: $id })
-      ON CREATE SET s.name = $name
-      ON MATCH SET s.name = $name
-    `;
+    const session = this.driver.session();
     try {
-      await session.executeWrite((tx) => tx.run(query, season));
-      console.log(` Saison "${season.name}" in Neo4j synchronisiert.`);
+      await session.run(`MERGE (s:Season {id: $id}) SET s.name = $name`, {
+        id: season.id,
+        name: season.name
+      });
     } finally {
       await session.close();
     }
@@ -20,7 +18,7 @@ export class CompetitionRepository {
 
   // Speichert eine Liga in der Neo4j-Datenbank und verknüpft sie mit der Saison
   async saveLeague(league: League): Promise<void> {
-    const session = getNeo4jSession();
+    const session = this.driver.session();
     const query = `
       MERGE (s:Season { id: $seasonId })
       MERGE (gc:GameClass { id: $gameClassId })
@@ -58,7 +56,7 @@ export class CompetitionRepository {
 
   // Speichert einen Club in der Neo4j-Datenbank und verknüpft sie mit der Saison
   async saveClub(club: Club): Promise<void> {
-    const session = getNeo4jSession();
+    const session = this.driver.session();
     const query = `
       // 1. Der Club-Knoten bleibt zeitlos (KEINE seasonId im SET)
       MERGE (c:Club { id: $id })
@@ -93,7 +91,7 @@ export class CompetitionRepository {
 
   //Speichert ein Team in der Neo4j-Datenbank und verknüpft es mit dem Club, der Liga und der Saison
   async saveTeam(team: Team): Promise<void> {
-    const session = getNeo4jSession();
+    const session = this.driver.session();
     const query = `
       // 1. Team-Knoten anlegen oder aktualisieren (zeitlos)
       MERGE (t:Team { id: $id })
@@ -134,7 +132,7 @@ export class CompetitionRepository {
 
   // Speichert eine Gruppe in der Neo4j-Datenbank und verknüpft sie mit der Liga, Spielklasse und Saison
   async saveGroup(group: Group): Promise<void> {
-    const session = getNeo4jSession();
+    const session = this.driver.session();
     const query = `
       // 1. Sicherstellen, dass die übergeordnete Liga existiert
       MERGE (l:League { id: $leagueId })

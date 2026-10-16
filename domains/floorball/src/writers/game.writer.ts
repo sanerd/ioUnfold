@@ -1,12 +1,11 @@
-import { getNeo4jSession } from '../config/neo4j';
-import { SwissunihockeyApiGame } from '@iounfold/database-schemas';
+import { Driver } from 'neo4j-driver';
+import { Game } from '../types/neo4j.types.js';
 
-export class GameRepository {
+export class GameWriter {
+  constructor(private driver: Driver) {}
   // Falls die Methode ein einzelnes Spiel oder ein Array entgegennimmt:
-  async saveGame(
-    game: SwissunihockeyApiGame | SwissunihockeyApiGame[]
-  ): Promise<void> {
-    const session = getNeo4jSession();
+  async saveGame(game: Game): Promise<void> {
+    const session = this.driver.session();
     const query = `UNWIND $games AS gameData
 
 // 1. Spiel erstellen oder aktualisieren
@@ -51,7 +50,9 @@ MERGE (g)-[:PLAYED_AT]->(v)`;
       const gamesArray = Array.isArray(game) ? game : [game];
 
       // HIER DIE ÄNDERUNG: { games: gamesArray } statt game
-      await session.executeWrite((tx) => tx.run(query, { games: gamesArray }));
+      await session.executeWrite((tx: any) =>
+        tx.run(query, { games: gamesArray })
+      );
 
       const logId = Array.isArray(game) ? `${game.length} Spiele` : game.id;
       console.log(` Spiel-Knoten "${logId}" verknüpft.`);

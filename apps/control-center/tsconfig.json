@@ -3,15 +3,13 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "paths": {
-      "@iounfold/database-schemas": [
-        "../../packages/database-schemas/src/index.ts"
-      ]
-    },
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"]
   },
   "include": ["src/**/*"]
 }
