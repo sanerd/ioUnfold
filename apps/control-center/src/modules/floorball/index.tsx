@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { FloorballDashboardView } from './views/DashboardView.js';
 import { JobTablePartial } from './views/JobTablePartial.js';
+import type { Driver } from '@iounfold/db-client';
 
 import {
   SwissunihockeyApiService,
@@ -33,9 +34,12 @@ const neo4jDriver = createNeo4jDriver(
 );
 
 /**
- * Factory-Funktion für das Floorball-Hono-Modul mit injiziertem JobRepository (PostgreSQL)
+ * Factory-Funktion für das Floorball-Hono-Modul mit injiziertem JobRepository (PostgreSQL) und Neo4j-Treiber
  */
-export const createFloorballModule = (jobRepo: JobRepository) => {
+export const createFloorballModule = (
+  jobRepo: JobRepository,
+  neo4jDriver: Driver
+) => {
   const app = new Hono();
 
   // 1. Hauptansicht: Lädt alle Jobs aus PostgreSQL
@@ -49,6 +53,9 @@ export const createFloorballModule = (jobRepo: JobRepository) => {
     const body = await c.req.parseBody();
     const season = (body['season'] as string) || '2025';
     const jobId = `SEASON-${season}`;
+
+    // Alten Job-Zustand für einen echten Neustart komplett entfernen
+    await jobRepo.deleteJob(jobId);
 
     // Job in PostgreSQL anlegen/aktualisieren
     await jobRepo.upsertJob({
@@ -142,6 +149,30 @@ export const createFloorballModule = (jobRepo: JobRepository) => {
     const existingJob = allJobs.find((j) => j.id === jobId);
 
     if (existingJob) {
+      // Vor dem Fortsetzen Neo4j-Verbindung testen, aber PAYLOAD UNBERÜHRT LASSEN!
+      try {
+        await neo4jDriver.verifyConnectivity();
+      } catch (neo4jErr: any) {
+        console.error(
+          '❌ Neo4j Verbindungstest beim Resume fehlgeschlagen:',
+          neo4jErr.message
+        );
+
+        // Status auf PAUSED belassen, damit der Payload erhalten bleibt
+        await jobRepo.upsertJob({
+          id: jobId,
+          type: existingJob.type,
+          target: existingJob.target,
+          status: 'PAUSED',
+          progress: existingJob.progress,
+          cursor_position: existingJob.cursor_position,
+          details: `Neo4j Verbindungsfehler beim Fortsetzen: ${neo4jErr.message}`
+        });
+
+        const jobs = await jobRepo.getJobs();
+        return c.html(<JobTablePartial jobs={jobs} />);
+      }
+
       // Status auf RUNNING setzen, aber progress & details aus dem bestehenden Job behalten!
       await jobRepo.upsertJob({
         id: jobId,

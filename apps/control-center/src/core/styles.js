@@ -3,25 +3,25 @@ export const adminCss = `
 @font-face {
   font-family: 'Inter';
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 100 900;
   font-display: swap;
-  src: url('https://fonts.gstatic.com/s/inter/v20/UcCm3FwrK3iLTcvnUwkT9mI1F55MKw.woff2') format('woff2');
+  src: url('/fonts/Inter.woff2') format('woff2');
 }
 
 @font-face {
   font-family: 'Newsreader';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 900;
   font-display: swap;
-  src: url('https://fonts.gstatic.com/s/newsreader/v26/cY9CfjOCX1hbuyalUrK439vCgYhCBJWxZCPp.woff2') format('woff2');
+  src: local('Arial');
 }
 
 @font-face {
   font-family: 'JetBrains Mono';
   font-style: normal;
-  font-weight: 400 500;
+  font-weight: 100 900;
   font-display: swap;
-  src: url('https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbX2o-flEEny0FZhsfKu5WU4xD-Cw6nSGjW7BDEAQ.woff2') format('woff2');
+  src: url('/fonts/JetBrainsMono.woff2') format('woff2');
 }
 
 /* --- 2. GLOBALE SCHRIFTARTEN & TYPOGRAFIE (ioUnfold Hybrid-System) --- */
@@ -31,7 +31,7 @@ export const adminCss = `
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Newsreader', Georgia, serif;
-  font-weight: 400;
+  font-weight: 400
   letter-spacing: -0.02em;
 }
 

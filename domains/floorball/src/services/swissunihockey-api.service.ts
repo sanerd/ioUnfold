@@ -8,7 +8,8 @@ import {
 } from '../types/swissunihockey-api.types.js';
 
 export class SwissunihockeyApiService {
-  private baseUrl = process.env.BASE_URL || 'https://api-v2.swissunihockey.ch';
+  private baseUrl =
+    process.env.SWISSUNIHOCKEY_API_URL || 'https://api-v2.swissunihockey.ch';
 
   // Holt die verfügbaren Saisons vom Verband
   async getSeasons(): Promise<SwissunihockeyApiSeason[]> {

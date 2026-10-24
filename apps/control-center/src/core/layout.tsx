@@ -1,4 +1,5 @@
 import { jsx } from 'hono/jsx';
+import { html } from 'hono/html';
 import { adminCss } from './styles.js';
 import { globalCss } from './global.style.js';
 
@@ -26,7 +27,7 @@ export const Layout = ({ currentModuleId, modules, children }: LayoutProps) => {
           rel='stylesheet'
           href='https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css'
         />
-        <style>{adminCss}</style>
+        <link rel='stylesheet' href='/global.styles.css' />
         <script src='https://unpkg.com/htmx.org@1.9.10'></script>
         <script src='https://unpkg.com/htmx.org@1.9.10/dist/ext/sse.js'></script>
       </head>

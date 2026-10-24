@@ -106,6 +106,7 @@ export const JobTablePartial = ({ jobs }: { jobs: SyncJobRecord[] }) => {
                           <button
                             hx-post={`/admin/floorball/sync/cancel/${job.id}`}
                             hx-target='#job-table-container'
+                            hx-confirm='Möchtest du diesen Job wirklich abbrechen?'
                             class='secondary outline'
                             style='background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 0.2rem 0.4rem; font-size: 0.7rem; cursor: pointer;'
                           >

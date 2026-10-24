@@ -71,6 +71,11 @@ export class JobRepository {
     );
   }
 
+  async deleteJob(id: string): Promise<void> {
+    await this.ensureTableExists();
+    await this.pool.query('DELETE FROM sync_jobs WHERE id = $1', [id]);
+  }
+
   async updateStatusAndCursor(
     id: string,
     status: string,

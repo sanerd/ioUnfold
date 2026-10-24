@@ -15,9 +15,9 @@ const activePipelines = new Map();
 // Globaler Neo4j-Treiber für Schreib-Operationen
 const neo4jDriver = createNeo4jDriver(process.env.NEO4J_URI || 'bolt://localhost:7687', process.env.NEO4J_USER || 'neo4j', process.env.NEO4J_PASSWORD || 'secret');
 /**
- * Factory-Funktion für das Floorball-Hono-Modul mit injiziertem JobRepository (PostgreSQL)
+ * Factory-Funktion für das Floorball-Hono-Modul mit injiziertem JobRepository (PostgreSQL) und Neo4j-Treiber
  */
-export const createFloorballModule = (jobRepo) => {
+export const createFloorballModule = (jobRepo, neo4jDriver) => {
     const app = new Hono();
     // 1. Hauptansicht: Lädt alle Jobs aus PostgreSQL
     app.get('/', async (c) => {
@@ -29,6 +29,8 @@ export const createFloorballModule = (jobRepo) => {
         const body = await c.req.parseBody();
         const season = body['season'] || '2025';
         const jobId = `SEASON-${season}`;
+        // Alten Job-Zustand für einen echten Neustart komplett entfernen
+        await jobRepo.deleteJob(jobId);
         // Job in PostgreSQL anlegen/aktualisieren
         await jobRepo.upsertJob({
             id: jobId,
@@ -100,6 +102,25 @@ export const createFloorballModule = (jobRepo) => {
         const allJobs = await jobRepo.getJobs();
         const existingJob = allJobs.find((j) => j.id === jobId);
         if (existingJob) {
+            // Vor dem Fortsetzen Neo4j-Verbindung testen, aber PAYLOAD UNBERÜHRT LASSEN!
+            try {
+                await neo4jDriver.verifyConnectivity();
+            }
+            catch (neo4jErr) {
+                console.error('❌ Neo4j Verbindungstest beim Resume fehlgeschlagen:', neo4jErr.message);
+                // Status auf PAUSED belassen, damit der Payload erhalten bleibt
+                await jobRepo.upsertJob({
+                    id: jobId,
+                    type: existingJob.type,
+                    target: existingJob.target,
+                    status: 'PAUSED',
+                    progress: existingJob.progress,
+                    cursor_position: existingJob.cursor_position,
+                    details: `Neo4j Verbindungsfehler beim Fortsetzen: ${neo4jErr.message}`
+                });
+                const jobs = await jobRepo.getJobs();
+                return c.html(_jsx(JobTablePartial, { jobs: jobs }));
+            }
             // Status auf RUNNING setzen, aber progress & details aus dem bestehenden Job behalten!
             await jobRepo.upsertJob({
                 id: jobId,

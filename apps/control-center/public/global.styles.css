@@ -1,0 +1,370 @@
+/* ==========================================================================
+ioUnfold Enterprise Design System (v1.0)
+Pico.css v2 Theme Architecture
+========================================================================== */
+
+/* --------------------------------------------------------------------------
+
+STATIC FONT DECLARATIONS (@font-face)
+-------------------------------------------------------------------------- */
+
+/* Inter (UI & Body Sans-Serif) */
+@font-face {
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    sans-serif;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-normal-latin.woff2') format('woff2');
+}
+
+/* Newsreader (Editorial Serif - Headlines & Hero Statements) */
+@font-face {
+  font-family: 'Newsreader', Georgia, Cambria, 'Times New Roman', Times, serif;
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/newsreader-normal-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Newsreader', Georgia, Cambria, 'Times New Roman', Times, serif;
+  font-style: italic;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/newsreader-italic-latin.woff2') format('woff2');
+}
+
+/* JetBrains Mono (Streams, Payloads, Metrics & Badges) */
+@font-face {
+  font-family:
+    'JetBrains Mono', Consolas, 'Liberation Mono', Menlo, Monaco, monospace;
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-normal-latin.woff2') format('woff2');
+}
+
+/* --------------------------------------------------------------------------
+2. CORE TOKENS & PICO.CSS V2 GLOBAL VARIABLES (DARK MODE / DEFAULT)
+-------------------------------------------------------------------------- */
+
+:root,
+[data-theme='dark'] {
+  /* --- Typography Families --- */
+  --pico-font-family-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  --pico-font-family-serif:
+    'Newsreader', Georgia, Cambria, 'Times New Roman', Times, serif;
+  --pico-font-family-monospace:
+    'JetBrains Mono', Consolas, 'Liberation Mono', Menlo, Monaco, monospace;
+
+  --pico-font-family: var(--pico-font-family-sans);
+
+  /* --- Typography Metrics --- */
+  --pico-font-weight-light: 300;
+  --pico-font-weight: 400;
+  --pico-font-weight-bold: 700;
+  --pico-line-height: 1.6;
+
+  /* --- Headlines (Serif Hybrid System) --- */
+  --pico-font-family-h1: var(--pico-font-family-serif);
+  --pico-font-family-h2: var(--pico-font-family-serif);
+  --pico-font-family-h3: var(--pico-font-family-serif);
+  --pico-font-family-h4: var(--pico-font-family-serif);
+  --pico-font-family-h5: var(--pico-font-family-sans);
+  --pico-font-family-h6: var(--pico-font-family-sans);
+
+  /* --- Form Factor & Layout (Hard-Edge Mandate: 2px) --- */
+  --pico-border-radius: 2px;
+  --pico-border-width: 1px;
+  --pico-outline-width: 2px;
+
+  /* --- Spacing System --- */
+  --pico-spacing: 1rem;
+  --pico-typography-spacing-vertical: 1.5rem;
+  --pico-block-spacing-vertical: 2.5rem;
+  --pico-block-spacing-horizontal: 1.5rem;
+
+  /* --- Colors: Foundation (Dark Mode Default) --- */
+  --io-bg-dark: #020617; /* Slate-950 */
+  --io-surface-dark: #0f172a; /* Slate-900 */
+  --io-border-dark: rgba(30, 41, 59, 0.6); /* Slate-800 / 60% */
+
+  --pico-background-color: var(--io-bg-dark);
+  --pico-color: #f8fafc; /* Slate-50 */
+  --pico-text-selection-color: #020617;
+  --pico-text-selection-background-color: #2dd4bf;
+
+  /* --- Brand Primary (Vivid Mint) --- */
+  --pico-primary: #2dd4bf;
+  --pico-primary-background: #2dd4bf;
+  --pico-primary-border: #2dd4bf;
+  --pico-primary-underline: rgba(45, 212, 191, 0.5);
+  --pico-primary-hover: #2de4d0;
+  --pico-primary-hover-background: #2de4d0;
+  --pico-primary-hover-border: #2de4d0;
+  --pico-primary-active: #14b8a6;
+  --pico-primary-active-background: #14b8a6;
+  --pico-primary-active-border: #14b8a6;
+  --pico-primary-focus: rgba(45, 212, 191, 0.25);
+  --pico-primary-inverse: #020617; /* Dark text on mint elements */
+
+  /* --- Secondary / Muted Colors --- */
+  --pico-secondary: #64748b; /* Slate-500 */
+  --pico-secondary-background: #1e293b;
+  --pico-secondary-border: #334155;
+  --pico-secondary-underline: rgba(100, 116, 139, 0.5);
+  --pico-secondary-hover: #94a3b8;
+  --pico-secondary-hover-background: #334155;
+  --pico-secondary-hover-border: #475569;
+  --pico-secondary-active: #cbd5e1;
+  --pico-secondary-active-background: #475569;
+  --pico-secondary-active-border: #64748b;
+  --pico-secondary-focus: rgba(100, 116, 139, 0.25);
+  --pico-secondary-inverse: #ffffff;
+
+  /* --- UI Structural Colors --- */
+  --pico-muted-color: #64748b;
+  --pico-muted-border: rgba(51, 65, 85, 0.4);
+  --pico-border-color: var(--io-border-dark);
+  --pico-box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.5);
+
+  /* --- Cards & Surfaces --- */
+  --pico-card-background-color: var(--io-surface-dark);
+  --pico-card-border-color: var(--pico-border-color);
+  --pico-card-box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --pico-card-sectioning-background-color: rgba(2, 6, 23, 0.5);
+
+  /* --- Form Controls --- */
+  --pico-form-element-background-color: #0f172a;
+  --pico-form-element-border-color: #1e293b;
+  --pico-form-element-color: #f8fafc;
+  --pico-form-element-placeholder-color: #475569;
+  --pico-form-element-active-background-color: #0f172a;
+  --pico-form-element-active-border-color: var(--pico-primary);
+  --pico-form-element-focus-color: var(--pico-primary);
+  --pico-form-element-disabled-opacity: 0.5;
+  --pico-form-element-invalid-border-color: #f87171;
+  --pico-form-element-invalid-active-border-color: #ef4444;
+  --pico-form-element-valid-border-color: #34d399;
+  --pico-form-element-valid-active-border-color: #10b981;
+
+  /* --- Switches & Radios/Checkboxes --- */
+  --pico-switch-background-color: #1e293b;
+  --pico-switch-color: var(--pico-primary-inverse);
+  --pico-switch-checked-background-color: var(--pico-primary);
+
+  /* --- Tables --- */
+  --pico-table-border-color: var(--pico-border-color);
+  --pico-table-row-stripped-background-color: rgba(15, 23, 42, 0.5);
+
+  /* --- Code / Monospace Elements --- */
+  --pico-code-background-color: #090d16;
+  --pico-code-color: #2dd4bf;
+  --pico-code-kbd-background-color: #1e293b;
+  --pico-code-kbd-color: #f8fafc;
+
+  /* --- Modals & Overlays --- */
+  --pico-modal-overlay-background-color: rgba(2, 6, 23, 0.85);
+
+  /* --- Accordion (Details / Summary) --- */
+  --pico-accordion-border-color: var(--pico-border-color);
+  --pico-accordion-active-summary-color: var(--pico-primary);
+  --pico-accordion-close-summary-color: var(--pico-color);
+
+  /* --- Dropdowns --- */
+  --pico-dropdown-background-color: var(--io-surface-dark);
+  --pico-dropdown-border-color: var(--pico-border-color);
+  --pico-dropdown-color: var(--pico-color);
+  --pico-dropdown-hover-background-color: #1e293b;
+
+  /* --- Tooltips --- */
+  --pico-tooltip-background-color: #1e293b;
+  --pico-tooltip-color: #f8fafc;
+
+  /* --- Status Colors (Enterprise Feedback) --- */
+  --pico-del-color: #f87171;
+  --pico-ins-color: #34d399;
+  --pico-mark-background-color: rgba(45, 212, 191, 0.2);
+  --pico-mark-color: #2dd4bf;
+}
+
+/* --------------------------------------------------------------------------
+3. LIGHT MODE OVERRIDES
+-------------------------------------------------------------------------- */
+
+[data-theme='light'] {
+  --io-bg-light: #f8fafc;
+  --io-surface-light: #ffffff;
+  --io-border-light: #e2e8f0;
+
+  --pico-background-color: var(--io-bg-light);
+  --pico-color: #020617;
+  --pico-text-selection-color: #ffffff;
+  --pico-text-selection-background-color: #0d9488;
+
+  /* Primary Accent (Teal-600 for contrast in Light Mode) */
+  --pico-primary: #0d9488;
+  --pico-primary-background: #0d9488;
+  --pico-primary-border: #0d9488;
+  --pico-primary-underline: rgba(13, 148, 136, 0.5);
+  --pico-primary-hover: #0f766e;
+  --pico-primary-hover-background: #0f766e;
+  --pico-primary-hover-border: #0f766e;
+  --pico-primary-active: #115e59;
+  --pico-primary-active-background: #115e59;
+  --pico-primary-active-border: #115e59;
+  --pico-primary-focus: rgba(13, 148, 136, 0.25);
+  --pico-primary-inverse: #ffffff;
+
+  --pico-secondary: #64748b;
+  --pico-secondary-background: #f1f5f9;
+  --pico-secondary-border: #cbd5e1;
+
+  --pico-muted-color: #64748b;
+  --pico-muted-border: #e2e8f0;
+  --pico-border-color: var(--io-border-light);
+
+  --pico-card-background-color: var(--io-surface-light);
+  --pico-card-border-color: var(--io-border-light);
+  --pico-card-sectioning-background-color: #f1f5f9;
+
+  --pico-form-element-background-color: #ffffff;
+  --pico-form-element-border-color: #cbd5e1;
+  --pico-form-element-color: #020617;
+  --pico-form-element-placeholder-color: #94a3b8;
+
+  --pico-code-background-color: #f1f5f9;
+  --pico-code-color: #0f766e;
+
+  --pico-dropdown-background-color: var(--io-surface-light);
+  --pico-dropdown-border-color: var(--io-border-light);
+  --pico-dropdown-hover-background-color: #f1f5f9;
+}
+
+/* --------------------------------------------------------------------------
+4. HARD-EDGE & ENTERPRISE OVERRIDES
+-------------------------------------------------------------------------- */
+
+/* Enforce strict 2px radius on all Interactive/Container elements */
+article,
+button,
+input,
+select,
+textarea,
+dialog,
+kbd,
+mark,
+[role='button'] {
+  border-radius: var(--pico-border-radius) !important;
+}
+
+/* Editorial Headlines (Newsreader) Adjustment */
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+/* Technical Monospace Elements */
+code,
+kbd,
+pre,
+samp,
+.io-metric,
+.io-badge {
+  font-family: var(--pico-font-family-monospace);
+}
+
+/* --- 6. BRANDING, UI COMPONENTS & LOG TERMINAL --- */
+.brand-title {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  color: var(--pico-primary);
+  text-transform: uppercase;
+}
+
+.label-uppercase {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  color: var(--pico-primary);
+}
+
+/* Badges & Terminal */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--pico-border-radius);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-RUNNING {
+  background: var(--pico-primary);
+  color: #020617;
+}
+.badge-COMPLETED {
+  background: #38bdf8;
+  color: #020617;
+}
+.badge-FAILED {
+  background: #ef4444;
+  color: #ffffff;
+}
+.badge-PAUSED {
+  background: #fbbf24;
+  color: #020617;
+}
+
+.log-terminal {
+  background-color: var(--pico-background-color);
+  border: 1px solid var(--pico-border-color);
+  border-radius: var(--pico-border-radius);
+  padding: 0.85rem;
+  font-size: 0.75rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.log-line {
+  margin-bottom: 0.25rem;
+}
+.log-time {
+  color: var(--pico-muted-color);
+  margin-right: 0.5rem;
+}
+.log-info {
+  color: var(--pico-primary);
+}
+.log-warn {
+  color: #fbbf24;
+}
+.log-error {
+  color: #f87171;
+}
+
+/* HTMX Swapping Transitions */
+.htmx-swapping {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}

@@ -26,5 +26,7 @@ export function createTimescalePool(
   });
 }
 
+export type { Driver } from 'neo4j-driver';
+
 // Export des Job-Repositories und der Typen
 export * from './postgres/jobRepository.js';
